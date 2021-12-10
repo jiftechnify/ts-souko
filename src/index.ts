@@ -1,4 +1,5 @@
 export * from './BaseStorage';
+export * from './Codec';
 
 export const sum = (a: number, b: number) => {
   if ('development' === process.env.NODE_ENV) {
