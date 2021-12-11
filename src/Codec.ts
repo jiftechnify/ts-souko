@@ -15,14 +15,14 @@ export interface Codec<T> {
   decode: (s: string) => T;
 }
 
-type BasicCodecsType = {
+type BuiltinCodecsType = {
   string: Codec<string>;
   number: Codec<number>;
   boolean: Codec<boolean>;
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
 };
 
-export const codecs: BasicCodecsType = Object.freeze({
+export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * Codec for `string`.
    */
