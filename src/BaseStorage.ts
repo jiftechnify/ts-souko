@@ -54,17 +54,17 @@ const createInMemoryStorage = (): BaseStorage => {
 export const baseStorage = {
   /** `localStorage` of Web API. */
   webLocal: {
-    get: localStorage.getItem,
-    set: localStorage.setItem,
-    remove: localStorage.removeItem,
-    clear: localStorage.clear,
+    get: (k: string) => localStorage.getItem(k),
+    set: (k: string, v: string) => localStorage.setItem(k, v),
+    remove: (k: string) => localStorage.removeItem(k),
+    clear: () => localStorage.clear(),
   },
   /** `sessionStorage` of Web API. */
   webSession: {
-    get: sessionStorage.getItem,
-    set: sessionStorage.setItem,
-    remove: sessionStorage.removeItem,
-    clear: sessionStorage.clear,
+    get: (k: string) => sessionStorage.getItem(k),
+    set: (k: string, v: string) => sessionStorage.setItem(k, v),
+    remove: (k: string) => sessionStorage.removeItem(k),
+    clear: () => sessionStorage.clear(),
   },
   /** In-memory storage. */
   inMemory: createInMemoryStorage(),
