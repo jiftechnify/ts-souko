@@ -15,18 +15,25 @@ export interface Codec<T> {
   decode: (s: string) => T;
 }
 
-export const codecs = {
+type BasicCodecsType = {
+  string: Codec<string>;
+  number: Codec<number>;
+  boolean: Codec<boolean>;
+  arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
+};
+
+export const codecs: BasicCodecsType = Object.freeze({
   /**
    * Codec for `string`.
    */
-  string: {
+  string: Object.freeze({
     encode: (s: string) => s,
     decode: (s: string) => s,
-  },
+  }),
   /**
    * Codec for `number`. `decode` throws when input doesn't represents a number.
    */
-  number: {
+  number: Object.freeze({
     encode: (n: number) => (Object.is(n, -0) ? '-0' : n.toString()), // (-0).toString() doesn't preserve the negative sign!
     decode: (s: string) => {
       if (s === 'NaN') {
@@ -38,11 +45,11 @@ export const codecs = {
       }
       return n;
     },
-  },
+  }),
   /**
    * Codec for `boolean`. `decode` throws when input doesn't represents a boolean.
    */
-  boolean: {
+  boolean: Object.freeze({
     encode: (b: boolean) => JSON.stringify(b),
     decode: (s: string) => {
       let parsed: unknown;
@@ -57,14 +64,14 @@ export const codecs = {
       }
       return parsed;
     },
-  },
+  }),
   /**
    * Codec for array of values of single type `T`.
    *
    * @param elemCodec Codec for elements of the array.
    */
   arrayOf: <T>(elemCodec: Codec<T>) => {
-    return {
+    return Object.freeze({
       encode: (arr: T[]) => JSON.stringify(arr.map(el => elemCodec.encode(el))),
       decode: (s: string) => {
         let parsed: unknown;
@@ -85,6 +92,6 @@ export const codecs = {
           throw new Error(`input '${s}' is not decodable as array of specified type`);
         }
       },
-    };
+    });
   },
-};
+});

@@ -51,21 +51,27 @@ const createInMemoryStorage = (): BaseStorage => {
   };
 };
 
-export const baseStorage = {
+type BuiltinBaseStorages = {
+  webLocal: BaseStorage;
+  webSession: BaseStorage;
+  inMemory: BaseStorage;
+};
+
+export const baseStorages: BuiltinBaseStorages = Object.freeze({
   /** `localStorage` of Web API. */
-  webLocal: {
+  webLocal: Object.freeze({
     get: (k: string) => localStorage.getItem(k),
     set: (k: string, v: string) => localStorage.setItem(k, v),
     remove: (k: string) => localStorage.removeItem(k),
     clear: () => localStorage.clear(),
-  },
+  }),
   /** `sessionStorage` of Web API. */
-  webSession: {
+  webSession: Object.freeze({
     get: (k: string) => sessionStorage.getItem(k),
     set: (k: string, v: string) => sessionStorage.setItem(k, v),
     remove: (k: string) => sessionStorage.removeItem(k),
     clear: () => sessionStorage.clear(),
-  },
+  }),
   /** In-memory storage. */
-  inMemory: createInMemoryStorage(),
-};
+  inMemory: Object.freeze(createInMemoryStorage()),
+});
