@@ -12,7 +12,7 @@ type StorageValTypeOf<Spec extends StorageCodecSpec, K extends StorageKeys<Spec>
   : never;
 
 export class TypedStorage<Spec extends StorageCodecSpec> {
-  #keyToCodec: Record<string, unknown>;
+  #keyToCodec: StorageCodecSpec;
   #baseStorage: BaseStorage;
 
   constructor(keyToCodec: Spec, baseStorage: BaseStorage) {
