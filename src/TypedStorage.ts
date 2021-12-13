@@ -11,55 +11,64 @@ type StorageValTypeOf<Spec extends StorageCodecSpec, K extends StorageKeys<Spec>
   ? T
   : never;
 
-export class TypedStorage<Spec extends StorageCodecSpec> {
-  #keyToCodec: StorageCodecSpec;
-  #baseStorage: BaseStorage;
+type TypedStorage<Spec extends StorageCodecSpec> = {
+  get<K extends StorageKeys<Spec>>(key: K): StorageValTypeOf<Spec, K> | null;
+  set<K extends StorageKeys<Spec>>(key: K, value: StorageValTypeOf<Spec, K>): void;
+  remove(key: StorageKeys<Spec>): void;
+};
 
-  constructor(keyToCodec: Spec, baseStorage: BaseStorage) {
-    this.#keyToCodec = Object.freeze(keyToCodec);
-    this.#baseStorage = baseStorage;
-  }
-
-  public get<K extends StorageKeys<Spec>>(key: K): StorageValTypeOf<Spec, K> | null {
-    try {
-      const rawVal = this.#baseStorage.get(key);
-      if (rawVal === null) {
-        return null;
-      }
-      const codec = this.#keyToCodec[key] as unknown as Codec<StorageValTypeOf<Spec, K>>;
-      return codec.decode(rawVal);
-    } catch (e) {
-      throw errorWithCause('failed to get data from storage', e);
-    }
-  }
-
-  public set<K extends StorageKeys<Spec>>(key: K, value: StorageValTypeOf<Spec, K>): void {
-    const codec = this.#keyToCodec[key] as unknown as Codec<StorageValTypeOf<Spec, K>>;
-    const encoded = codec.encode(value);
-    try {
-      return this.#baseStorage.set(key, encoded);
-    } catch (e) {
-      throw errorWithCause('failed to set data to storage', e);
-    }
-  }
-
-  public remove(key: StorageKeys<Spec>): void {
-    try {
-      return this.#baseStorage.remove(key);
-    } catch (e) {
-      throw errorWithCause('failed to remove data from storage', e);
-    }
-  }
-
-  public clear(): void {
-    try {
-      return this.#baseStorage.clear();
-    } catch (e) {
-      throw errorWithCause('failed to clear storage', e);
-    }
-  }
+export interface TypedStorageOptions {
+  base: BaseStorage;
+  keyPrefix?: string;
 }
 
+export const createTypedStorage = <Spec extends StorageCodecSpec>(
+  spec: Spec,
+  { base, keyPrefix: prefix }: TypedStorageOptions
+): TypedStorage<Spec> => {
+  const keyToCodec = spec;
+  const baseStrg = base;
+
+  const prefixed = (key: string) => {
+    if (prefix === undefined) {
+      return key;
+    }
+    return `${prefix}_${key}`;
+  };
+
+  return Object.freeze({
+    get<K extends StorageKeys<Spec>>(key: K): StorageValTypeOf<Spec, K> | null {
+      try {
+        const rawVal = baseStrg.get(prefixed(key));
+        if (rawVal === null) {
+          return null;
+        }
+        const codec = keyToCodec[key] as Codec<StorageValTypeOf<Spec, K>>;
+        return codec.decode(rawVal);
+      } catch (e) {
+        throw errorWithCause(`failed to get value from storage (key: '${key}')`, e);
+      }
+    },
+    set<K extends StorageKeys<Spec>>(key: K, value: StorageValTypeOf<Spec, K>): void {
+      try {
+        const codec = keyToCodec[key] as Codec<StorageValTypeOf<Spec, K>>;
+        const encoded = codec.encode(value);
+        baseStrg.set(prefixed(key), encoded);
+      } catch (e) {
+        throw errorWithCause(`failed to set value from storage (key: '${key}')`, e);
+      }
+    },
+    remove(key: StorageKeys<Spec>): void {
+      try {
+        baseStrg.remove(prefixed(key));
+      } catch (e) {
+        throw errorWithCause(`failed to remove value from storage (key : '${key}')`, e);
+      }
+    },
+  });
+};
+
+/* error utils */
 const errorWithCause = (msg: string, errCause: unknown): Error => {
   if (hasStringMessage(errCause)) {
     return Error(`${msg}: ${errCause.message}`);
@@ -68,10 +77,10 @@ const errorWithCause = (msg: string, errCause: unknown): Error => {
 };
 
 const hasStringMessage = (v: unknown): v is { message: string } => {
-  if (typeof v !== 'object') {
+  if (typeof v !== 'object' || v === null) {
     return false;
   }
-  if (!Object.keys(v ?? {}).includes('message')) {
+  if (!Object.keys(v).includes('message')) {
     return false;
   }
   return typeof (v as { message: unknown }).message === 'string';

@@ -25,11 +25,6 @@ export interface BaseStorage {
    * @param key key to remove
    */
   remove(key: string): void;
-
-  /**
-   * Removes all keys in the storage.
-   */
-  clear(): void;
 }
 
 const createInMemoryStorage = (): BaseStorage => {
@@ -44,9 +39,6 @@ const createInMemoryStorage = (): BaseStorage => {
     },
     remove(key: string) {
       m.delete(key);
-    },
-    clear() {
-      m.clear();
     },
   };
 };
@@ -63,14 +55,12 @@ export const baseStorages: BuiltinBaseStorages = Object.freeze({
     get: (k: string) => localStorage.getItem(k),
     set: (k: string, v: string) => localStorage.setItem(k, v),
     remove: (k: string) => localStorage.removeItem(k),
-    clear: () => localStorage.clear(),
   }),
   /** `sessionStorage` of Web API. */
   webSession: Object.freeze({
     get: (k: string) => sessionStorage.getItem(k),
     set: (k: string, v: string) => sessionStorage.setItem(k, v),
     remove: (k: string) => sessionStorage.removeItem(k),
-    clear: () => sessionStorage.clear(),
   }),
   /** In-memory storage. */
   inMemory: Object.freeze(createInMemoryStorage()),
