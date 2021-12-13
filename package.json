@@ -1,8 +1,26 @@
 {
   "name": "ts-souko",
   "version": "0.1.0",
+  "description": "Strongly typed Storage wrapper for TypeScript",
+  "keywords": [
+    "storage",
+    "type-safe",
+    "TypeScript",
+    "ts"
+  ],
   "license": "MIT",
-  "author": "jiftechnify",
+  "author": {
+    "name": "jiftechnify", 
+    "email": "jiftech.stlfy@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jiftechnify/ts-souko.git"
+  },
+  "homepage": "https://github.com/jiftechnify/ts-souko",
+  "bugs": {
+    "url": "https://github.com/jiftechnify/ts-souko/issues"
+  },
   "main": "dist/index.js",
   "module": "dist/ts-souko.esm.js",
   "typings": "dist/index.d.ts",
