@@ -1,27 +1,66 @@
 import { BaseStorage } from './BaseStorage';
 import { Codec } from './Codec';
 
+/* auxiliary types / type functions for defining `TypedStorage` I/F */
+// An object consists of "key to `Codec` for its value".
+// `Codec<any>` means "some `Codec<T>`".
 type StorageCodecSpec = Record<string, Codec<any>>;
 
+// Set of string keys in `Spec` (concrete type that satisfies `StorageCodecSpec`), i.e. set of available keys of the storage wrapper.
+// Somehow `keyof Spec` is inferred as `string | number | symbol`, so exclude `number | symbol` possibility here.
 type StorageKeys<Spec extends StorageCodecSpec> = {
   [K in keyof Spec]: K extends string ? K : never;
 }[keyof Spec];
 
+// Type of value for specific key `K` in a storage that has `Spec`.
 type StorageValTypeOf<Spec extends StorageCodecSpec, K extends StorageKeys<Spec>> = Spec[K] extends Codec<infer T>
   ? T
   : never;
 
+/**
+ * Interface of strongly typed storage wrapper.
+ */
 type TypedStorage<Spec extends StorageCodecSpec> = {
+  /**
+   * Retrieves a value associated with the `key` from the underlying storage (with decoding).
+   *
+   * Returns `null` if value is not associated.
+   */
   get<K extends StorageKeys<Spec>>(key: K): StorageValTypeOf<Spec, K> | null;
+
+  /**
+   * Associates the `key` with the `value` and saves the key-value pair in the underlying storage (with encoding).
+   */
   set<K extends StorageKeys<Spec>>(key: K, value: StorageValTypeOf<Spec, K>): void;
+
+  /**
+   * Removes the `key` and the value with it from the underlying storage.
+   */
   remove(key: StorageKeys<Spec>): void;
 };
 
+/**
+ * Options for TypedStorage.
+ */
 export interface TypedStorageOptions {
+  /**
+   * `BaseStorage` implementation used by typed wrapper.
+   */
   base: BaseStorage;
+
+  /**
+   * Every key is prefixed by `${keyPrefix}_` *internally* (in BaseStorage level) when this option is set.
+   *
+   * Can be used for namespacing *singleton* storage (e.g. LocalStorage, SessionStorage).
+   */
   keyPrefix?: string;
 }
 
+/**
+ * Creates a `TypedStorage`, typed storage wrapper.
+ * @param spec an object consists of "key to `Codec` for its value" pairs, specifies value's type for each key.
+ * @param options options for `TypedStorage`.
+ */
 export const createTypedStorage = <Spec extends StorageCodecSpec>(
   spec: Spec,
   { base, keyPrefix: prefix }: TypedStorageOptions
