@@ -1,7 +1,7 @@
 {
   "name": "ts-souko",
   "version": "0.1.0",
-  "description": "Strongly typed Storage wrapper for TypeScript",
+  "description": "Type-safe Storage wrapper for TypeScript",
   "keywords": [
     "storage",
     "type-safe",
