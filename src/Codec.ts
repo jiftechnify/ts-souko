@@ -46,7 +46,7 @@ const jsonStrCodecWithValidation = <T>(validate: (p: unknown) => T, validatorNam
 };
 
 // validate `parsed` with `validate`(validation logic). `validate` must throw error if validation is failed.
-const validateParsedJSON = <T>(validate: (p: unknown) => T, parsed: unknown, validatorName: string): T => {
+const validateParsedJSON = <T>(validate: (p: unknown) => T, parsed: unknown, validatorName?: string): T => {
   try {
     return validate(parsed);
   } catch (e) {
@@ -134,7 +134,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * Codec for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
    *
-   * @param validate Runtime validation logic. It should throw error if value didn't have expected type(`T`).
+   * @param validate Runtime validation logic. It should throw error if the value passed didn't have expected type(`T`).
    * @param validatorName Optional. Name of validator that will be shown in validation error.
    */
   jsonWithValidation: <T>(validate: (parsed: unknown) => T, validatorName?: string) => {
