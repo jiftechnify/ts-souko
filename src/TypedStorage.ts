@@ -7,10 +7,9 @@ import { Codec } from './Codec';
 type StorageCodecSpec = Record<string, Codec<any>>;
 
 // Set of string keys in `Spec` (concrete type that satisfies `StorageCodecSpec`), i.e. set of available keys of the storage wrapper.
-// Somehow `keyof Spec` is inferred as `string | number | symbol`, so exclude `number | symbol` possibility here.
-type StorageKeys<Spec extends StorageCodecSpec> = {
-  [K in keyof Spec]: K extends string ? K : never;
-}[keyof Spec];
+// `keyof Spec` is inferred as `string | number | symbol` due to [a change in TS 2.9](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-9.html#support-number-and-symbol-named-properties-with-keyof-and-mapped-types),
+// so excluding `number | symbol` possibility here.
+type StorageKeys<Spec extends StorageCodecSpec> = Extract<keyof Spec, string>;
 
 // Type of value for specific key `K` in a storage that has `Spec`.
 type StorageValTypeOf<Spec extends StorageCodecSpec, K extends StorageKeys<Spec>> = Spec[K] extends Codec<infer T>
