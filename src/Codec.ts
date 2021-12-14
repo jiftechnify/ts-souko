@@ -1,4 +1,4 @@
-import { fold } from 'fp-ts/lib/Either';
+import { fold } from 'fp-ts/Either';
 import { Errors, Type as IoTsType } from 'io-ts';
 import { assert as assertBySS, Struct as SSStruct } from 'superstruct';
 import { ZodType } from 'zod';
