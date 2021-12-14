@@ -1,4 +1,4 @@
-import { BaseStorage } from './BaseStorage';
+import { AsyncBaseStorage, BaseStorage } from './BaseStorage';
 import { Codec } from './Codec';
 
 /* auxiliary types / type functions for defining `TypedStorage` I/F */
@@ -100,6 +100,96 @@ export const createTypedStorage = <Spec extends StorageCodecSpec>(
     remove(key: StorageKeys<Spec>): void {
       try {
         baseStrg.remove(prefixed(key));
+      } catch (e) {
+        throw errorWithCause(`failed to remove value from storage (key : '${key}')`, e);
+      }
+    },
+  });
+};
+
+/**
+ * Interface of asynchronous strongly typed storage wrapper.
+ */
+type AsyncTypedStorage<Spec extends StorageCodecSpec> = {
+  /**
+   * Retrieves a value associated with the `key` from the underlying storage (with decoding) asynchronously.
+   *
+   * Returns `null` if value is not associated.
+   */
+  get<K extends StorageKeys<Spec>>(key: K): Promise<StorageValTypeOf<Spec, K> | null>;
+
+  /**
+   * Associates the `key` with the `value` and saves the key-value pair in the underlying storage (with encoding) asynchronously.
+   */
+  set<K extends StorageKeys<Spec>>(key: K, value: StorageValTypeOf<Spec, K>): Promise<void>;
+
+  /**
+   * Removes the `key` and the value with it from the underlying storage asynchronously.
+   */
+  remove(key: StorageKeys<Spec>): Promise<void>;
+};
+
+/**
+ * Options for TypedStorage.
+ */
+export interface AsyncTypedStorageOptions {
+  /**
+   * `BaseStorage` implementation used by typed wrapper.
+   */
+  base: AsyncBaseStorage;
+
+  /**
+   * Every key is prefixed by `${keyPrefix}_` *internally* (in BaseStorage level) when this option is set.
+   *
+   * Can be used for namespacing *singleton* storage (e.g. LocalStorage, SessionStorage).
+   */
+  keyPrefix?: string;
+}
+
+/**
+ * Creates a `AsyncTypedStorage`, typed wrapper for asynchronous storage.
+ * @param spec an object consists of "key to `Codec` for its value" pairs, specifies value's type for each key.
+ * @param options options for `AsyncTypedStorage`.
+ */
+export const createAsyncTypedStorage = <Spec extends StorageCodecSpec>(
+  spec: Spec,
+  { base, keyPrefix: prefix }: AsyncTypedStorageOptions
+): AsyncTypedStorage<Spec> => {
+  const keyToCodec = spec;
+  const baseStrg = base;
+
+  const prefixed = (key: string) => {
+    if (prefix === undefined) {
+      return key;
+    }
+    return `${prefix}_${key}`;
+  };
+
+  return Object.freeze({
+    async get<K extends StorageKeys<Spec>>(key: K): Promise<StorageValTypeOf<Spec, K> | null> {
+      try {
+        const rawVal = await baseStrg.get(prefixed(key));
+        if (rawVal === null) {
+          return null;
+        }
+        const codec = keyToCodec[key] as Codec<StorageValTypeOf<Spec, K>>;
+        return codec.decode(rawVal);
+      } catch (e) {
+        throw errorWithCause(`failed to get value from storage (key: '${key}')`, e);
+      }
+    },
+    async set<K extends StorageKeys<Spec>>(key: K, value: StorageValTypeOf<Spec, K>): Promise<void> {
+      try {
+        const codec = keyToCodec[key] as Codec<StorageValTypeOf<Spec, K>>;
+        const encoded = codec.encode(value);
+        await baseStrg.set(prefixed(key), encoded);
+      } catch (e) {
+        throw errorWithCause(`failed to set value from storage (key: '${key}')`, e);
+      }
+    },
+    async remove(key: StorageKeys<Spec>): Promise<void> {
+      try {
+        await baseStrg.remove(prefixed(key));
       } catch (e) {
         throw errorWithCause(`failed to remove value from storage (key : '${key}')`, e);
       }
