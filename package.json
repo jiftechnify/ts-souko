@@ -78,6 +78,7 @@
   "dependencies": {
     "fp-ts": "^2.11.5",
     "io-ts": "^2.2.16",
-    "superstruct": "^0.15.3"
+    "superstruct": "^0.15.3",
+    "zod": "^3.11.6"
   }
 }

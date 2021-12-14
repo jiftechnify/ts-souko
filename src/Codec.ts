@@ -1,6 +1,7 @@
 import { fold } from 'fp-ts/lib/Either';
 import { Errors, Type as IoTsType } from 'io-ts';
 import { assert as assertBySS, Struct as SSStruct } from 'superstruct';
+import { ZodType } from 'zod';
 
 /**
  * Describes the way to convert a value to a string back and forth.
@@ -28,6 +29,7 @@ type BuiltinCodecsType = {
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
   fromIoTs: <T>(iots: IoTsType<T, string, string>) => Codec<T>;
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => Codec<T>;
+  jsonWithZod: <T>(zod: ZodType<T>) => Codec<T>;
 };
 
 export const codecs: BuiltinCodecsType = Object.freeze({
@@ -121,9 +123,9 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     });
   },
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with assertion on decoding powered by [Superstruct](https://docs.superstructjs.org/).
+   * Codec for type `T` that encodes to/decodes from JSON string, with assertion on decoding powered by [superstruct](https://docs.superstructjs.org/).
    *
-   * @param ss value of Superstruct `Struct<T>` that is used to assert value parsed from JSON.
+   * @param ss value of superstruct `Struct<T>` that is used to assert value parsed from JSON.
    */
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => {
     return Object.freeze({
@@ -135,6 +137,24 @@ export const codecs: BuiltinCodecsType = Object.freeze({
           return parsed;
         } catch (e) {
           throw new Error(`superstruct assertion error: ${e}`);
+        }
+      },
+    });
+  },
+  /**
+   * Codec for type `T` that encodes to/decodes from JSON string, with assertion on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
+   *
+   * @param zod value of `ZodType<T>`("schema" object) that is used to assert value parsed from JSON.
+   */
+  jsonWithZod: <T>(zod: ZodType<T>) => {
+    return Object.freeze({
+      encode: (t: T) => JSON.stringify(t),
+      decode: (s: string) => {
+        const parsed = JSON.parse(s) as unknown;
+        try {
+          return zod.parse(parsed);
+        } catch (e) {
+          throw new Error(`zod assertion error: ${e}`);
         }
       },
     });
