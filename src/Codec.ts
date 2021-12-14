@@ -27,7 +27,7 @@ type BuiltinCodecsType = {
   number: Codec<number>;
   boolean: Codec<boolean>;
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
-  fromIoTs: <T>(iots: IoTsType<T, string, string>) => Codec<T>;
+  jsonWithIoTs: <T>(iots: IoTsType<T>) => Codec<T>;
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => Codec<T>;
   jsonWithZod: <T>(zod: ZodType<T>) => Codec<T>;
 };
@@ -105,27 +105,31 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     });
   },
   /**
-   * Creates `Codec<T>` from `Type<T, string, string>` in [io-ts](https://gcanti.github.io/io-ts/).
+   * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [io-ts](https://gcanti.github.io/io-ts/).
    *
-   * @param iots value of io-ts `Type` that is used to encode/decode value.
+   * @param iots value of io-ts `Type<T>` that is used to validate value parsed from JSON.
    */
-  fromIoTs: <T>(iots: IoTsType<T, string, string>) => {
+  jsonWithIoTs: <T>(iots: IoTsType<T>) => {
     return Object.freeze({
-      encode: (t: T) => iots.encode(t),
+      encode: (t: T) => JSON.stringify(t),
       decode: (s: string) => {
-        const v = iots.decode(s);
-        const onLeft = (e: Errors) => {
-          throw new Error(`io-ts validation error: ${e}`);
-        };
-        const onRight = (t: T) => t;
-        return fold(onLeft, onRight)(v);
+        const parsed = JSON.parse(s) as unknown;
+        const validated = iots.decode(parsed);
+        return fold(
+          // onLeft
+          (e: Errors) => {
+            throw new Error(`io-ts validation error: ${e}`);
+          },
+          // onRight
+          (t: T) => t
+        )(validated);
       },
     });
   },
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with assertion on decoding powered by [superstruct](https://docs.superstructjs.org/).
+   * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [superstruct](https://docs.superstructjs.org/).
    *
-   * @param ss value of superstruct `Struct<T>` that is used to assert value parsed from JSON.
+   * @param ss value of superstruct `Struct<T>` that is used to validate value parsed from JSON.
    */
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => {
     return Object.freeze({
@@ -136,15 +140,15 @@ export const codecs: BuiltinCodecsType = Object.freeze({
           assertBySS(parsed, ss);
           return parsed;
         } catch (e) {
-          throw new Error(`superstruct assertion error: ${e}`);
+          throw new Error(`superstruct validation error: ${e}`);
         }
       },
     });
   },
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with assertion on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
+   * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
    *
-   * @param zod value of `ZodType<T>`("schema" object) that is used to assert value parsed from JSON.
+   * @param zod value of `ZodType<T>`("schema" object) that is used to validate value parsed from JSON.
    */
   jsonWithZod: <T>(zod: ZodType<T>) => {
     return Object.freeze({
@@ -154,7 +158,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
         try {
           return zod.parse(parsed);
         } catch (e) {
-          throw new Error(`zod assertion error: ${e}`);
+          throw new Error(`zod validation error: ${e}`);
         }
       },
     });
