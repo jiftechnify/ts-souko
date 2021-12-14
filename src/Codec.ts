@@ -1,3 +1,6 @@
+import { fold } from 'fp-ts/lib/Either';
+import { Errors, Type as IoTsType } from 'io-ts';
+
 /**
  * Describes the way to convert a value to a string back and forth.
  *
@@ -5,12 +8,12 @@
  */
 export interface Codec<T> {
   /**
-   * Convert a value of type `T` to its string representation.
+   * Converts a value of type `T` to its string representation.
    */
   encode: (t: T) => string;
 
   /**
-   * Convert a string to the value of type `T` that is represented by the input.
+   * Converts a string to the value of type `T` that is represented by the input.
    *
    * Should throw error when the input is decodable as type `T`.
    */
@@ -22,6 +25,7 @@ type BuiltinCodecsType = {
   number: Codec<number>;
   boolean: Codec<boolean>;
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
+  fromIoTs: <T>(iots: IoTsType<T, string, string>) => Codec<T>;
 };
 
 export const codecs: BuiltinCodecsType = Object.freeze({
@@ -93,6 +97,24 @@ export const codecs: BuiltinCodecsType = Object.freeze({
         } catch (e) {
           throw new Error(`input '${s}' is not decodable as array of specified type`);
         }
+      },
+    });
+  },
+  /**
+   * Creates `Codec<T>` from `Type<T, string, string>` in [io-ts](https://gcanti.github.io/io-ts/).
+   *
+   * @param iots value of io-ts `Type`.
+   */
+  fromIoTs: <T>(iots: IoTsType<T, string, string>) => {
+    return Object.freeze({
+      encode: (t: T) => iots.encode(t),
+      decode: (s: string) => {
+        const v = iots.decode(s);
+        const onLeft = (e: Errors) => {
+          throw new Error(`io-ts validation error: ${e}`);
+        };
+        const onRight = (t: T) => t;
+        return fold(onLeft, onRight)(v);
       },
     });
   },
