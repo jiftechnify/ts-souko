@@ -27,28 +27,34 @@ type BuiltinCodecsType = {
   number: Codec<number>;
   boolean: Codec<boolean>;
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
+
+  jsonWithValidation: <T>(validate: (p: unknown) => T, validatorName?: string) => Codec<T>;
   jsonWithIoTs: <T>(iots: IoTsType<T>) => Codec<T>;
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => Codec<T>;
   jsonWithZod: <T>(zod: ZodType<T>) => Codec<T>;
 };
 
 // Codec for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
-const jsonStrCodecWithValidation = <T>(validatorName: string, validate: (p: unknown) => T): Codec<T> => {
+const jsonStrCodecWithValidation = <T>(validate: (p: unknown) => T, validatorName?: string): Codec<T> => {
   return {
     encode: (t: T) => JSON.stringify(t),
     decode: (s: string) => {
       const parsed = JSON.parse(s) as unknown;
-      return validateParsedJSON(validatorName, validate, parsed);
+      return validateParsedJSON(validate, parsed, validatorName);
     },
   };
 };
 
 // validate `parsed` with `validate`(validation logic). `validate` must throw error if validation is failed.
-const validateParsedJSON = <T>(validatorName: string, validate: (p: unknown) => T, parsed: unknown): T => {
+const validateParsedJSON = <T>(validate: (p: unknown) => T, parsed: unknown, validatorName: string): T => {
   try {
     return validate(parsed);
   } catch (e) {
-    throw new Error(`${validatorName} validation error: ${e}`);
+    let errMsg = `validation error: ${e}`;
+    if (validatorName !== '') {
+      errMsg = `${validatorName} ${errMsg}`;
+    }
+    throw new Error(errMsg);
   }
 };
 
@@ -124,6 +130,16 @@ export const codecs: BuiltinCodecsType = Object.freeze({
       },
     });
   },
+
+  /**
+   * Codec for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
+   *
+   * @param validate Runtime validation logic. It should throw error if value didn't have expected type(`T`).
+   * @param validatorName Optional. Name of validator that will be shown in validation error.
+   */
+  jsonWithValidation: <T>(validate: (parsed: unknown) => T, validatorName?: string) => {
+    return Object.freeze(jsonStrCodecWithValidation(validate, validatorName));
+  },
   /**
    * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [io-ts](https://gcanti.github.io/io-ts/).
    *
@@ -131,7 +147,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    */
   jsonWithIoTs: <T>(iots: IoTsType<T>) => {
     return Object.freeze(
-      jsonStrCodecWithValidation('io-ts', (parsed: unknown) => {
+      jsonStrCodecWithValidation((parsed: unknown) => {
         const validated = iots.decode(parsed);
         return fold(
           // onLeft
@@ -141,7 +157,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
           // onRight
           (t: T) => t
         )(validated);
-      })
+      }, 'io-ts')
     );
   },
   /**
@@ -151,10 +167,10 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    */
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => {
     return Object.freeze(
-      jsonStrCodecWithValidation('superstruct', (parsed: unknown) => {
+      jsonStrCodecWithValidation((parsed: unknown) => {
         assertBySS(parsed, ss);
         return parsed;
-      })
+      }, 'superstruct')
     );
   },
   /**
@@ -164,9 +180,9 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    */
   jsonWithZod: <T>(zod: ZodType<T>) => {
     return Object.freeze(
-      jsonStrCodecWithValidation('zod', (parsed: unknown) => {
+      jsonStrCodecWithValidation((parsed: unknown) => {
         return zod.parse(parsed);
-      })
+      }, 'zod')
     );
   },
 });
