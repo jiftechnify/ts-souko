@@ -1,5 +1,6 @@
 import { fold } from 'fp-ts/lib/Either';
 import { Errors, Type as IoTsType } from 'io-ts';
+import { assert as assertBySS, Struct as SSStruct } from 'superstruct';
 
 /**
  * Describes the way to convert a value to a string back and forth.
@@ -26,6 +27,7 @@ type BuiltinCodecsType = {
   boolean: Codec<boolean>;
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
   fromIoTs: <T>(iots: IoTsType<T, string, string>) => Codec<T>;
+  jsonWithSuperstruct: <T>(ss: SSStruct<T>) => Codec<T>;
 };
 
 export const codecs: BuiltinCodecsType = Object.freeze({
@@ -103,7 +105,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * Creates `Codec<T>` from `Type<T, string, string>` in [io-ts](https://gcanti.github.io/io-ts/).
    *
-   * @param iots value of io-ts `Type`.
+   * @param iots value of io-ts `Type` that is used to encode/decode value.
    */
   fromIoTs: <T>(iots: IoTsType<T, string, string>) => {
     return Object.freeze({
@@ -115,6 +117,25 @@ export const codecs: BuiltinCodecsType = Object.freeze({
         };
         const onRight = (t: T) => t;
         return fold(onLeft, onRight)(v);
+      },
+    });
+  },
+  /**
+   * Codec for type `T` that encodes to/decodes from JSON string, with assertion on decoding powered by [Superstruct](https://docs.superstructjs.org/).
+   *
+   * @param ss value of Superstruct `Struct<T>` that is used to assert value parsed from JSON.
+   */
+  jsonWithSuperstruct: <T>(ss: SSStruct<T>) => {
+    return Object.freeze({
+      encode: (t: T) => JSON.stringify(t),
+      decode: (s: string) => {
+        const parsed = JSON.parse(s) as unknown;
+        try {
+          assertBySS(parsed, ss);
+          return parsed;
+        } catch (e) {
+          throw new Error(`superstruct assertion error: ${e}`);
+        }
       },
     });
   },
