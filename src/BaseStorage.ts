@@ -47,6 +47,7 @@ type BuiltinBaseStorages = {
   webLocal: BaseStorage;
   webSession: BaseStorage;
   inMemory: BaseStorage;
+  inMemoryScoped: () => BaseStorage;
 };
 
 export const baseStorages: BuiltinBaseStorages = Object.freeze({
@@ -64,4 +65,6 @@ export const baseStorages: BuiltinBaseStorages = Object.freeze({
   }),
   /** In-memory storage. */
   inMemory: Object.freeze(createInMemoryStorage()),
+  /** Creates *scoped* in-memory storage instance. Every instance has separate key space.  */
+  inMemoryScoped: () => Object.freeze(createInMemoryStorage()),
 });

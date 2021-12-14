@@ -1,6 +1,6 @@
 import { baseStorages } from '../src/BaseStorage';
 
-describe('inMemoryStorage', () => {
+describe('baseStorage.inMemory', () => {
   describe('get/set', () => {
     test('get retrieves the value which is associated with a key via set', () => {
       baseStorages.inMemory.set('foo', 'some_value');
@@ -29,5 +29,18 @@ describe('inMemoryStorage', () => {
       // clean up
       baseStorages.inMemory.remove('bar');
     });
+  });
+});
+
+describe('baseStorages.inMemoryScoped', () => {
+  test('every instance has separate key space', () => {
+    const s1 = baseStorages.inMemoryScoped();
+    const s2 = baseStorages.inMemoryScoped();
+
+    s1.set('key', 'value1');
+    s2.set('key', 'value2');
+
+    expect(s1.get('key')).toEqual('value1');
+    expect(s2.get('key')).toEqual('value2');
   });
 });
