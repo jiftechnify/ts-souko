@@ -17,7 +17,7 @@ export interface Codec<T> {
   /**
    * Converts a string to the value of type `T` that is represented by the input.
    *
-   * Should throw error when the input is decodable as type `T`.
+   * Should throw error when the input is not decodable as type `T`.
    */
   decode: (s: string) => T;
 }
