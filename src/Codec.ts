@@ -1,5 +1,7 @@
 /**
  * Describes the way to convert a value to a string back and forth.
+ *
+ * You should implement `encode` and `decode` to ensure that they satisfy the rule: `decode(encode(x)) === x`.
  */
 export interface Codec<T> {
   /**
