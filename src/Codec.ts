@@ -25,6 +25,7 @@ export interface Codec<T> {
 type BuiltinCodecsType = {
   string: Codec<string>;
   number: Codec<number>;
+  bigint: Codec<bigint>;
   boolean: Codec<boolean>;
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
 
@@ -32,6 +33,10 @@ type BuiltinCodecsType = {
   jsonWithIoTs: <T>(iots: IoTsType<T>) => Codec<T>;
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => Codec<T>;
   jsonWithZod: <T>(zod: ZodType<T>) => Codec<T>;
+};
+
+const decodeError = (input: string, typeName: string) => {
+  return new Error(`input '${input}' is not decodable as ${typeName}`);
 };
 
 // Codec for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
@@ -67,7 +72,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     decode: (s: string) => s,
   }),
   /**
-   * Codec for `number`. `decode` throws when input doesn't represents a number.
+   * Codec for `number`. `decode` throws when input doesn't represent a number.
    */
   number: Object.freeze({
     encode: (n: number) => (Object.is(n, -0) ? '-0' : n.toString()), // (-0).toString() doesn't preserve the negative sign!
@@ -77,9 +82,22 @@ export const codecs: BuiltinCodecsType = Object.freeze({
       }
       const n = Number(s);
       if (isNaN(n)) {
-        throw new Error(`input '${s}' is not decodable as number`);
+        throw decodeError(s, 'number');
       }
       return n;
+    },
+  }),
+  /**
+   * Codec for 'bigint'. `decode` throws when input doesn't represent a bigint value.
+   */
+  bigint: Object.freeze({
+    encode: (n: bigint) => n.toString(),
+    decode: (s: string) => {
+      try {
+        return BigInt(s);
+      } catch {
+        throw decodeError(s, 'bigint');
+      }
     },
   }),
   /**
@@ -93,10 +111,10 @@ export const codecs: BuiltinCodecsType = Object.freeze({
       try {
         parsed = JSON.parse(s) as unknown;
       } catch (e) {
-        throw new Error(`input '${s}' is not decodable as boolean`);
+        throw decodeError(s, 'boolean');
       }
       if (typeof parsed !== 'boolean') {
-        throw new Error(`input '${s}' is not decodable as boolean`);
+        throw decodeError(s, 'boolean');
       }
       return parsed;
     },
@@ -114,18 +132,18 @@ export const codecs: BuiltinCodecsType = Object.freeze({
         try {
           parsed = JSON.parse(s) as unknown;
         } catch (e) {
-          throw new Error(`input '${s}' is not decodable as array`);
+          throw decodeError(s, 'array');
         }
         if (!Array.isArray(parsed)) {
-          throw new Error(`input '${s}' is not decodable as array`);
+          throw decodeError(s, 'array');
         }
         if (!parsed.every(el => typeof el === 'string')) {
-          throw new Error(`input '${s}' is not decodable as array`);
+          throw decodeError(s, 'array');
         }
         try {
           return parsed.map(el => elemCodec.decode(el));
         } catch (e) {
-          throw new Error(`input '${s}' is not decodable as array of specified type`);
+          throw decodeError(s, 'array of specified type');
         }
       },
     });
