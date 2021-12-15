@@ -170,7 +170,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
         return fold(
           // onLeft
           (e: Errors) => {
-            throw new Error(`io-ts validation error: ${e}`);
+            throw e;
           },
           // onRight
           (t: T) => t
