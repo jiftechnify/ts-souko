@@ -1,3 +1,6 @@
+import * as t from 'io-ts';
+import * as ss from 'superstruct';
+import { z } from 'zod';
 import { codecs } from '../src/Codec';
 
 describe('codecs.string', () => {
@@ -110,5 +113,89 @@ describe('codecs.arrayOf', () => {
     expect(() => {
       boolArrayCodec.decode(input);
     }).toThrow('is not decodable as array of specified type');
+  });
+});
+
+describe('codecs.jsonWithIoTs', () => {
+  const User = t.type({
+    userId: t.number,
+    name: t.string,
+  });
+  type User = t.TypeOf<typeof User>;
+
+  const userCodec = codecs.jsonWithIoTs(User);
+
+  test('encode-then-decode value of correct type', () => {
+    const u: User = { userId: 100, name: 'John' };
+    const encoded = userCodec.encode(u);
+    expect(encoded).toEqual(JSON.stringify(u));
+
+    const decoded = userCodec.decode(encoded);
+    expect(decoded).toEqual(u);
+  });
+
+  test('decoding invalid JSON throws error', () => {
+    const cases = [{ foo: 100, bar: 'John' }, { name: 'Alice' }, { userId: '100', name: 'John' }];
+    for (const c of cases) {
+      expect(() => {
+        userCodec.decode(JSON.stringify(c));
+      }).toThrow();
+    }
+  });
+});
+
+describe('codecs.jsonWithSuperstruct', () => {
+  const User = ss.object({
+    userId: ss.number(),
+    name: ss.string(),
+  });
+  type User = ss.Infer<typeof User>;
+
+  const userCodec = codecs.jsonWithSuperstruct(User);
+
+  test('encode-then-decode value of correct type', () => {
+    const u: User = { userId: 100, name: 'John' };
+    const encoded = userCodec.encode(u);
+    expect(encoded).toEqual(JSON.stringify(u));
+
+    const decoded = userCodec.decode(encoded);
+    expect(decoded).toEqual(u);
+  });
+
+  test('decoding invalid JSON throws error', () => {
+    const cases = [{ foo: 100, bar: 'John' }, { name: 'Alice' }, { userId: '100', name: 'John' }];
+    for (const c of cases) {
+      expect(() => {
+        userCodec.decode(JSON.stringify(c));
+      }).toThrow();
+    }
+  });
+});
+
+describe('codecs.jsonWithZod', () => {
+  const User = z.object({
+    userId: z.number(),
+    name: z.string(),
+  });
+  type User = z.infer<typeof User>;
+
+  const userCodec = codecs.jsonWithZod(User);
+
+  test('encode-then-decode value of correct type', () => {
+    const u: User = { userId: 100, name: 'John' };
+    const encoded = userCodec.encode(u);
+    expect(encoded).toEqual(JSON.stringify(u));
+
+    const decoded = userCodec.decode(encoded);
+    expect(decoded).toEqual(u);
+  });
+
+  test('decoding invalid JSON throws error', () => {
+    const cases = [{ foo: 100, bar: 'John' }, { name: 'Alice' }, { userId: '100', name: 'John' }];
+    for (const c of cases) {
+      expect(() => {
+        userCodec.decode(JSON.stringify(c));
+      }).toThrow();
+    }
   });
 });
