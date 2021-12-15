@@ -116,6 +116,32 @@ describe('codecs.arrayOf', () => {
   });
 });
 
+describe('codecs.tupleOf', () => {
+  const snbTupleCodec = codecs.tupleOf([codecs.string, codecs.number, codecs.boolean] as const);
+
+  test('decode-then-encode preserves tuple value', () => {
+    const tuple = ['foo', 123, true] as const;
+    const encoded = snbTupleCodec.encode(tuple);
+    expect(snbTupleCodec.decode(encoded)).toEqual(tuple);
+  });
+  test('throws error when decoding a string not parsable as array(tuple)', () => {
+    const cases = ['str', '1', 'true', '{"a":1,"b":2}', ':not-a-json:', 'null'];
+    for (const c of cases) {
+      expect(() => {
+        snbTupleCodec.decode(c);
+      }).toThrow('is not decodable as tuple');
+    }
+  });
+  test('throws error when decoding a string parsable as array but some element is not decodable by inner codec', () => {
+    const cases = ['["foo","1","?"]', '["bar","?","true"]'];
+    for (const c of cases) {
+      expect(() => {
+        snbTupleCodec.decode(c);
+      }).toThrow('is not decodable as tuple of specified type');
+    }
+  });
+});
+
 describe('codecs.jsonWithIoTs', () => {
   const User = t.type({
     userId: t.number,

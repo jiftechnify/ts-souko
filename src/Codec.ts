@@ -24,12 +24,20 @@ export interface Codec<T> {
   decode: (s: string) => T;
 }
 
+// auxiliary types for typing `tupleOf` Codec.
+type TupleOfCodecs = readonly [...Codec<any>[]];
+type TupleOfEachCodecTarget<T extends TupleOfCodecs> = {
+  [I in keyof T]: T[I] extends Codec<infer T> ? T : never;
+};
+
 type BuiltinCodecsType = {
   string: Codec<string>;
   number: Codec<number>;
   bigint: Codec<bigint>;
   boolean: Codec<boolean>;
+
   arrayOf: <T>(elemCodec: Codec<T>) => Codec<T[]>;
+  tupleOf: <Codecs extends TupleOfCodecs>(elemCodecs: Codecs) => Codec<TupleOfEachCodecTarget<Codecs>>;
 
   jsonWithValidation: <T>(validate: (p: unknown) => T) => Codec<T>;
   jsonWithIoTs: <T>(iots: IoTsType<T>) => Codec<T>;
@@ -41,7 +49,7 @@ const decodeError = (input: string, typeName: string) => {
   return new Error(`input '${input}' is not decodable as ${typeName}`);
 };
 
-// Codec for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
+// `Codec` for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
 const jsonStrCodecWithValidation = <T>(validate: (p: unknown) => T): Codec<T> => {
   return {
     encode: (t: T) => JSON.stringify(t),
@@ -63,14 +71,14 @@ const validateParsedJSON = <T>(validate: (p: unknown) => T, parsed: unknown): T 
 
 export const codecs: BuiltinCodecsType = Object.freeze({
   /**
-   * Codec for `string`.
+   * `Codec` for `string`.
    */
   string: Object.freeze({
     encode: (s: string) => s,
     decode: (s: string) => s,
   }),
   /**
-   * Codec for `number`. `decode` throws when input doesn't represent a number.
+   * `Codec` for `number`. `decode` throws when input doesn't represent a number.
    */
   number: Object.freeze({
     encode: (n: number) => (Object.is(n, -0) ? '-0' : n.toString()), // (-0).toString() doesn't preserve the negative sign!
@@ -86,7 +94,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     },
   }),
   /**
-   * Codec for 'bigint'. `decode` throws when input doesn't represent a bigint value.
+   * `Codec` for 'bigint'. `decode` throws when input doesn't represent a bigint value.
    */
   bigint: Object.freeze({
     encode: (n: bigint) => n.toString(),
@@ -99,7 +107,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     },
   }),
   /**
-   * Codec for `boolean`. `decode` throws when input doesn't represents a boolean.
+   * `Codec` for `boolean`. `decode` throws when input doesn't represents a boolean.
    */
   boolean: Object.freeze({
     encode: (b: boolean) => JSON.stringify(b),
@@ -117,8 +125,9 @@ export const codecs: BuiltinCodecsType = Object.freeze({
       return parsed;
     },
   }),
+
   /**
-   * Codec for array of values of single type `T`.
+   * `Codec` for array of values of single type `T`.
    *
    * @param elemCodec Codec for elements of the array.
    */
@@ -146,9 +155,46 @@ export const codecs: BuiltinCodecsType = Object.freeze({
       },
     });
   },
+  /**
+   * Create `Codec` for arbitrary tuple type from tuple of `Codec`s for each element.
+   *
+   * @param elemCodecs Tuple of `Codec`s. Each `Codec` should be able to handle corresponding element of tuple you want to encode/decode.
+   */
+  tupleOf: <Codecs extends TupleOfCodecs>(elemCodecs: Codecs): Codec<TupleOfEachCodecTarget<Codecs>> => {
+    return Object.freeze({
+      encode: (tup: TupleOfEachCodecTarget<Codecs>) => {
+        const encRes = tup.map((e, i) => {
+          const codec = elemCodecs[i];
+          return codec.encode(e);
+        });
+        return JSON.stringify(encRes);
+      },
+      decode: (s: string) => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(s) as unknown;
+        } catch (e) {
+          throw decodeError(s, 'tuple');
+        }
+        if (!Array.isArray(parsed) || !parsed.every(el => typeof el === 'string')) {
+          throw decodeError(s, 'tuple');
+        }
+
+        const decRes = parsed.map((s, i) => {
+          const codec = elemCodecs[i];
+          try {
+            return codec.decode(s);
+          } catch (e) {
+            throw decodeError(s, 'tuple of specified type');
+          }
+        });
+        return decRes as unknown as TupleOfEachCodecTarget<Codecs>;
+      },
+    });
+  },
 
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
+   * `Codec` for type `T` that encodes to/decodes from JSON string, with runtime validation on decoding.
    *
    * @param validate Runtime validation logic. It should throw error if the value passed didn't have expected type(`T`).
    */
@@ -156,7 +202,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     return Object.freeze(jsonStrCodecWithValidation(validate));
   },
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [io-ts](https://gcanti.github.io/io-ts/).
+   * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [io-ts](https://gcanti.github.io/io-ts/).
    *
    * @param iots value of io-ts `Type<T>` that is used to validate value parsed from JSON.
    * @param reporter io-ts `Reporter` used to print validation error. It's output type must be `string` or `string[]`. `PathReporter` will be used if no `Reporter` is specified.
@@ -183,7 +229,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     );
   },
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [superstruct](https://docs.superstructjs.org/).
+   * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [superstruct](https://docs.superstructjs.org/).
    *
    * @param ss value of superstruct `Struct<T>` that is used to validate value parsed from JSON.
    */
@@ -196,7 +242,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
     );
   },
   /**
-   * Codec for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
+   * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
    *
    * @param zod value of `ZodType<T>`("schema" object) that is used to validate value parsed from JSON.
    */
