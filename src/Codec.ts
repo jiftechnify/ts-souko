@@ -129,6 +129,10 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * `Codec` for array of values of single type `T`.
    *
+   * @example
+   * const numArrayCodec: Codec<number[]> = codecs.arrayOf(codecs.number);
+   * numArrayCodec.encode([1, 2, 3]);
+   *
    * @param elemCodec Codec for elements of the array.
    */
   arrayOf: <T>(elemCodec: Codec<T>) => {
@@ -157,6 +161,11 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   },
   /**
    * Create `Codec` for arbitrary tuple type from tuple of `Codec`s for each element.
+   *
+   * @example
+   * const snbCodec = codecs.tupleOf([codecs.string, codecs.number, codecs.boolean] as const);
+   * const triple = ["foo", 42, true] as const;
+   * snbCodec.encode(triple);
    *
    * @param elemCodecs Tuple of `Codec`s. Each `Codec` should be able to handle corresponding element of tuple you want to encode/decode.
    */
@@ -204,6 +213,20 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [io-ts](https://gcanti.github.io/io-ts/).
    *
+   * @example
+   * import * as t from 'io-ts';
+   *
+   * const User = t.type({
+   *    userId: t.number,
+   *    name: t.string,
+   * });
+   * type User = t.TypeOf<typeof User>;
+   *
+   * const userCodec = codecs.jsonWithIoTs(User);
+   *
+   * const u: User = { userId: 1, name: "Alice" };
+   * userCodec.encode(u);
+   *
    * @param iots value of io-ts `Type<T>` that is used to validate value parsed from JSON.
    * @param reporter io-ts `Reporter` used to print validation error. It's output type must be `string` or `string[]`. `PathReporter` will be used if no `Reporter` is specified.
    */
@@ -231,6 +254,20 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [superstruct](https://docs.superstructjs.org/).
    *
+   * @example
+   * import * as s from 'superstruct';
+   *
+   * const User = s.object({
+   *    userId: s.number(),
+   *    name: s.string(),
+   * });
+   * type User = s.Infer<typeof User>;
+   *
+   * const userCodec = codecs.jsonWithSuperstruct(User);
+   *
+   * const u: User = { userId: 1, name: "Alice" };
+   * userCodec.encode(u);
+   *
    * @param ss value of superstruct `Struct<T>` that is used to validate value parsed from JSON.
    */
   jsonWithSuperstruct: <T>(ss: SSStruct<T>) => {
@@ -243,6 +280,20 @@ export const codecs: BuiltinCodecsType = Object.freeze({
   },
   /**
    * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
+   *
+   * @example
+   * import { z } from 'zod';
+   *
+   * const User = z.object({
+   *    userId: z.number(),
+   *    name: z.string(),
+   * });
+   * type User = z.infer<typeof User>;
+   *
+   * const userCodec = codecs.jsonWithZod(User);
+   *
+   * const u: User = { userId: 1, name: "Alice" };
+   * userCodec.encode(u);
    *
    * @param zod value of `ZodType<T>`("schema" object) that is used to validate value parsed from JSON.
    */

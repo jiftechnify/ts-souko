@@ -57,6 +57,24 @@ export interface TypedStorageOptions {
 
 /**
  * Creates a `TypedStorage`, typed storage wrapper.
+ *
+ * @example
+ * import { createTypedStorage, codecs, baseStorages } from 'ts-souko';
+ *
+ * // create typed wrapper for LocalStorage
+ * const storage = createTypedStorage({
+ *   id: codecs.number,
+ *   name: codecs.string,
+ * }, { base: baseStorages.webLocal } );
+ *
+ * storage.set('id', 100);       // OK
+ * storage.set('name', 'Alice'); // OK
+ * storage.set('id', 'nan');     // type error!
+ * storage.set('name', 0);       // type error!
+ *
+ * storage.get('id');   // number | null
+ * storage.get('name'); // string | null
+ *
  * @param spec an object consists of "key to `Codec` for its value" pairs, specifies value's type for each key.
  * @param options options for `TypedStorage`.
  */
@@ -147,6 +165,29 @@ export interface AsyncTypedStorageOptions {
 
 /**
  * Creates a `AsyncTypedStorage`, typed wrapper for asynchronous storage.
+ *
+ * @example
+ * import { createAsyncTypedStorage, codecs, AsyncBaseStorage } from 'ts-souko';
+ *
+ * // async string value storage
+ * const asyncBase: AsyncBaseStorage = ...;
+ *
+ * // create typed wrapper for `asyncBase`
+ * const storage = createAsyncTypedStorage({
+ *   id: codecs.number,
+ *   name: codecs.string,
+ * }, { base: asyncBase } );
+ *
+ * async () => {
+ *   await storage.set('id', 100);       // OK
+ *   await storage.set('name', 'Alice'); // OK
+ *   await storage.set('id', 'nan');     // type error!
+ *   await storage.set('name', 0);       // type error!
+ *
+ *   const i = await storage.get('id');   // number | null
+ *   const n = await storage.get('name'); // string | null
+ * }
+ *
  * @param spec an object consists of "key to `Codec` for its value" pairs, specifies value's type for each key.
  * @param options options for `AsyncTypedStorage`.
  */
