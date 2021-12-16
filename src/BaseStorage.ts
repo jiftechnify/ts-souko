@@ -98,6 +98,14 @@ type BuiltinBaseStorages = {
   inMemoryScopedAsync: () => AsyncBaseStorage;
 };
 
+/**
+ * Built-in {@linkcode BaseStorage} or {@linkcode AsyncBaseStorage} implementations.
+ *
+ * Includes:
+ * - `webLocal`: [`localStorage`](https://developer.mozilla.org/ja/docs/Web/API/Window/localStorage) in Web API
+ * - `webSession`: [`sessionStorage`](https://developer.mozilla.org/ja/docs/Web/API/Window/sessionStorage) in Web API
+ * - In-memory storage implementations
+ */
 export const baseStorages: BuiltinBaseStorages = Object.freeze({
   /**
    * `localStorage` of Web API.

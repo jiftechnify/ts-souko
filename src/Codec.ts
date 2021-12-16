@@ -6,7 +6,7 @@ import { assert as assertBySS, Struct as SSStruct } from 'superstruct';
 import { ZodType } from 'zod';
 
 /**
- * Describes the way to convert a value to a string back and forth.
+ * Prescribes the way to convert a value to a string back and forth.
  *
  * You should implement `encode` and `decode` to ensure that they satisfy the rule: `decode(encode(x)) === x`.
  */
@@ -69,6 +69,13 @@ const validateParsedJSON = <T>(validate: (p: unknown) => T, parsed: unknown): T 
   }
 };
 
+/**
+ * Built-in {@linkcode Codec} implementations.
+ *
+ * Includes:
+ * - `Codec`s for basic types(`string`, `number`, `bigint`, `boolean`, arrays & tuples)
+ * - `Codec`s that interoperate with 3rd-party schema validators.
+ */
 export const codecs: BuiltinCodecsType = Object.freeze({
   /**
    * `Codec` for `string`.
@@ -130,8 +137,10 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    * `Codec` for array of values of single type `T`.
    *
    * @example
+   * ```
    * const numArrayCodec: Codec<number[]> = codecs.arrayOf(codecs.number);
    * numArrayCodec.encode([1, 2, 3]);
+   * ```
    *
    * @param elemCodec Codec for elements of the array.
    */
@@ -163,9 +172,11 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    * Create `Codec` for arbitrary tuple type from tuple of `Codec`s for each element.
    *
    * @example
+   * ```
    * const snbCodec = codecs.tupleOf([codecs.string, codecs.number, codecs.boolean] as const);
    * const triple = ["foo", 42, true] as const;
    * snbCodec.encode(triple);
+   * ```
    *
    * @param elemCodecs Tuple of `Codec`s. Each `Codec` should be able to handle corresponding element of tuple you want to encode/decode.
    */
@@ -214,6 +225,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [io-ts](https://gcanti.github.io/io-ts/).
    *
    * @example
+   * ```
    * import * as t from 'io-ts';
    *
    * const User = t.type({
@@ -226,6 +238,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    *
    * const u: User = { userId: 1, name: "Alice" };
    * userCodec.encode(u);
+   * ```
    *
    * @param iots value of io-ts `Type<T>` that is used to validate value parsed from JSON.
    * @param reporter io-ts `Reporter` used to print validation error. It's output type must be `string` or `string[]`. `PathReporter` will be used if no `Reporter` is specified.
@@ -255,6 +268,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [superstruct](https://docs.superstructjs.org/).
    *
    * @example
+   * ```
    * import * as s from 'superstruct';
    *
    * const User = s.object({
@@ -267,6 +281,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    *
    * const u: User = { userId: 1, name: "Alice" };
    * userCodec.encode(u);
+   * ```
    *
    * @param ss value of superstruct `Struct<T>` that is used to validate value parsed from JSON.
    */
@@ -282,6 +297,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    * `Codec` for type `T` that encodes to/decodes from JSON string, with validation on decoding powered by [zod](https://github.com/colinhacks/zod#readme).
    *
    * @example
+   * ```
    * import { z } from 'zod';
    *
    * const User = z.object({
@@ -294,6 +310,7 @@ export const codecs: BuiltinCodecsType = Object.freeze({
    *
    * const u: User = { userId: 1, name: "Alice" };
    * userCodec.encode(u);
+   * ```
    *
    * @param zod value of `ZodType<T>`("schema" object) that is used to validate value parsed from JSON.
    */

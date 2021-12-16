@@ -39,18 +39,18 @@ type TypedStorage<Spec extends StorageCodecSpec> = {
 };
 
 /**
- * Options for TypedStorage.
+ * Options for `TypedStorage`.
  */
 export interface TypedStorageOptions {
   /**
-   * `BaseStorage` implementation used by typed wrapper.
+   * {@linkcode BaseStorage} implementation used by typed wrapper.
    */
   base: BaseStorage;
 
   /**
-   * Every key is prefixed by `${keyPrefix}_` *internally* (in BaseStorage level) when this option is set.
+   * If this option is set, every key will be prefixed by `${keyPrefix}_` *internally* (in BaseStorage level).
    *
-   * Can be used for namespacing *singleton* storage (e.g. LocalStorage, SessionStorage).
+   * Can be used for namespacing a *singleton* storage (e.g. localStorage/sessionStorage).
    */
   keyPrefix?: string;
 }
@@ -59,6 +59,7 @@ export interface TypedStorageOptions {
  * Creates a `TypedStorage`, typed storage wrapper.
  *
  * @example
+ * ```
  * import { createTypedStorage, codecs, baseStorages } from 'ts-souko';
  *
  * // create typed wrapper for LocalStorage
@@ -74,6 +75,7 @@ export interface TypedStorageOptions {
  *
  * storage.get('id');   // number | null
  * storage.get('name'); // string | null
+ * ```
  *
  * @param spec an object consists of "key to `Codec` for its value" pairs, specifies value's type for each key.
  * @param options options for `TypedStorage`.
@@ -147,18 +149,18 @@ type AsyncTypedStorage<Spec extends StorageCodecSpec> = {
 };
 
 /**
- * Options for TypedStorage.
+ * Options for `TypedStorage`.
  */
 export interface AsyncTypedStorageOptions {
   /**
-   * `BaseStorage` implementation used by typed wrapper.
+   * {@linkcode AsyncBaseStorage} implementation used by typed wrapper.
    */
   base: AsyncBaseStorage;
 
   /**
-   * Every key is prefixed by `${keyPrefix}_` *internally* (in BaseStorage level) when this option is set.
+   * If this option is set, every key will be prefixed by `${keyPrefix}_` *internally* (in BaseStorage level).
    *
-   * Can be used for namespacing *singleton* storage (e.g. LocalStorage, SessionStorage).
+   * Can be used for namespacing *singleton* storage (e.g. localStorage/sessionStorage).
    */
   keyPrefix?: string;
 }
@@ -167,6 +169,7 @@ export interface AsyncTypedStorageOptions {
  * Creates a `AsyncTypedStorage`, typed wrapper for asynchronous storage.
  *
  * @example
+ * ```
  * import { createAsyncTypedStorage, codecs, AsyncBaseStorage } from 'ts-souko';
  *
  * // async string value storage
@@ -187,6 +190,7 @@ export interface AsyncTypedStorageOptions {
  *   const i = await storage.get('id');   // number | null
  *   const n = await storage.get('name'); // string | null
  * }
+ * ```
  *
  * @param spec an object consists of "key to `Codec` for its value" pairs, specifies value's type for each key.
  * @param options options for `AsyncTypedStorage`.
