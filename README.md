@@ -91,7 +91,7 @@ ts.set('ssv', ["a", "b"]) // type error!
 Via `Codec` abstraction, you can write code that retrieve value from storage with schema validations using a library like [io-ts](https://gcanti.github.io/io-ts/). Fortunately, you don't have to write own `Codec` with validations! *ts-souko* is equipped with built-in `Codec` interoperate with popular schema validation libraries:
 
 | Library Name | `Codec`  |
-|---|---|
+|:-------------|:---------|
 |[io-ts](https://gcanti.github.io/io-ts/) | `codecs.jsonWithIoTs(iotsType, reporter?)`|
 |[superstruct](https://docs.superstructjs.org/)| `codecs.jsonWithSuperstruct(struct)`|
 |[zod](https://github.com/colinhacks/zod#readme)| `codecs.jsonWithZod(zod)` |
