@@ -121,3 +121,6 @@ ts.set('user', { userId: '1', namee: 'Alice' }) // type error, of course.
 ```
 
 If you couldn't find your favorite validation library, you can still use `codecs.jsonWithValidation(validate)`, where `validate` is function implements custom validation logic.
+
+## API Document
+see [Here](https://jiftechnify.github.io/ts-souko/).
