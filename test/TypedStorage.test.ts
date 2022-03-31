@@ -44,7 +44,7 @@ describe('TypedStorage', () => {
   });
 
   describe('storage with prefix', () => {
-    const ts = createTypedStorage({ key: codecs.number }, { base: baseStorages.inMemory, keyPrefix: 'pre' });
+    const ts = createTypedStorage({ key: codecs.number }, { base: baseStorages.inMemory, keyPrefix: 'pre_' });
 
     afterAll(() => {
       ts.remove('key');
