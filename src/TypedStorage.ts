@@ -48,7 +48,7 @@ export interface TypedStorageOptions {
   base: BaseStorage;
 
   /**
-   * If this option is set, every key will be prefixed by `${keyPrefix}_` *internally* (in BaseStorage level).
+   * If this option is set, every key will be prefixed by `${keyPrefix}` *internally* (in BaseStorage level).
    *
    * Can be used for namespacing a *singleton* storage (e.g. localStorage/sessionStorage).
    */
@@ -91,7 +91,7 @@ export const createTypedStorage = <Spec extends StorageCodecSpec>(
     if (prefix === undefined) {
       return key;
     }
-    return `${prefix}_${key}`;
+    return `${prefix}${key}`;
   };
 
   return Object.freeze({
@@ -158,7 +158,7 @@ export interface AsyncTypedStorageOptions {
   base: AsyncBaseStorage;
 
   /**
-   * If this option is set, every key will be prefixed by `${keyPrefix}_` *internally* (in BaseStorage level).
+   * If this option is set, every key will be prefixed by `${keyPrefix}` *internally* (in BaseStorage level).
    *
    * Can be used for namespacing *singleton* storage (e.g. localStorage/sessionStorage).
    */
@@ -206,7 +206,7 @@ export const createAsyncTypedStorage = <Spec extends StorageCodecSpec>(
     if (prefix === undefined) {
       return key;
     }
-    return `${prefix}_${key}`;
+    return `${prefix}${key}`;
   };
 
   return Object.freeze({
