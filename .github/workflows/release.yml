@@ -24,7 +24,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create document
-        run: yarn doc
+        run: yarn docs
 
       - name: Deploy document
         uses: JamesIves/github-pages-deploy-action@v4.2.5

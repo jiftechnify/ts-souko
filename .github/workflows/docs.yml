@@ -17,7 +17,7 @@ jobs:
         uses: bahmutov/npm-install@v1
 
       - name: Create document
-        run: yarn doc
+        run: yarn docs
 
       - name: Deploy document
         uses: JamesIves/github-pages-deploy-action@v4.2.5
