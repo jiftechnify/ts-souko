@@ -36,7 +36,8 @@
     "prepare": "dts build",
     "size": "size-limit",
     "start": "dts watch",
-    "test": "dts test"
+    "test": "dts test",
+    "doc": "typedoc src/index.ts"
   },
   "husky": {
     "hooks": {
